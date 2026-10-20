@@ -1,0 +1,27 @@
+# Wazuh Active Response tuning, Oct 18, 2026
+
+## Attempt 1: rules_id 5712,5763,2502 -> rule 2502 fired first, but nothing was blocked
+# tail /var/ossec/logs/active-responses.log
+2026/10/18 16:20:26 active-response/bin/firewall-drop: Starting
+2026/10/18 16:20:26 active-response/bin/firewall-drop: {"version":1,"origin":{"name":"node01","module":"wazuh-execd"},"command":"add","parameters":{"extra_args":[],"alert":{"timestamp":"2026-10-18T16:20:26.498+0000","rule":{"level":10,"description":"syslog: User missed the password more than one time","id":"2502","mitre":{"id":["T1110"],"tactic":["Credential Access"],"technique":["Brute Force"]},"firedtimes":1, ...},"agent":{"id":"000","name":"wazuh-server"},"full_log":"Oct 18 16:20:25 wazuh-server sshd[66569]: PAM 2 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.1.184","decoder":{"name":"sshd"},"location":"journald"},"program":"active-response/bin/firewall-drop"}}
+2026/10/18 16:20:26 active-response/bin/firewall-drop: Cannot read 'srcip' from data
+
+# iptables -L INPUT -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+(empty: no block)
+
+## Diagnosis: which SSH rules carry a decoded srcip?
+# grep -o '"rule":{"level":[0-9]*,"description":"[^"]*","id":"5[0-9]*"\|"srcip":"[^"]*"' /var/ossec/logs/alerts/alerts.json | tail -8
+"rule":{"level":5,"description":"PAM: User login failed.","id":"5503"
+"srcip":"192.168.1.184"
+"rule":{"level":5,"description":"sshd: Attempt to login using a non-existent user","id":"5710"
+"srcip":"192.168.1.184"
+"rule":{"level":5,"description":"sshd: Attempt to login using a non-existent user","id":"5710"
+"srcip":"192.168.1.184"
+"rule":{"level":5,"description":"sshd: Attempt to login using a non-existent user","id":"5710"
+"srcip":"192.168.1.184"
+
+# Conclusion: sshd rules (5710 -> 5712) carry srcip; the PAM rule 2502 does not.
+#   5712 needs 8 x 5710 from the same IP within 120 s, which manual typing never reached.
+# Fix: rules_id 5712,5763 only + a scripted attack loop that reaches the threshold.

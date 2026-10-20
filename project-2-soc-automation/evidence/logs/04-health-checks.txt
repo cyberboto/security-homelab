@@ -1,0 +1,27 @@
+# Health endpoints, checked from the host PC (PowerShell), Oct 18, 2026
+PS> curl.exe -s http://192.168.1.184:9000/api/status
+{"versions":{"Scalligraph":"5.4.11-1","TheHive":"5.4.11-1","Play":"3.0.x"}, ...}
+PS> curl.exe -sk -o NUL -w "Wazuh API: %{http_code}`n" https://192.168.1.211:55000/
+Wazuh API: 401          <- healthy: the API is up and requires authentication
+PS> curl.exe -s http://localhost:5678/healthz
+{"status":"ok"}
+
+# n8n Check Services output, all healthy:
+TheHive          HTTP 200   24 ms
+Wazuh API        HTTP 401   14 ms
+Wazuh Dashboard  HTTP 200  333 ms
+all_up: true, down_count: 0
+
+# After `sudo docker stop thehive`:
+all_up: false, down_count: 1
+down_services: "TheHive (connect ECONNREFUSED 192.168.1.184:9000)"
+Slack: 🔴 SERVICE DOWN — TheHive (connect ECONNREFUSED 192.168.1.184:9000)
+
+# n8n watchdog on the Wazuh VM:
+[root@wazuh-server ~]# N8N_URL=http://192.168.1.31:5999/healthz /usr/local/bin/n8n-watchdog.sh
+n8n DOWN                 -> Slack: 🔴 SERVICE DOWN — n8n ... is not responding (2026-10-18T17:45:50Z)
+[root@wazuh-server ~]# /usr/local/bin/n8n-watchdog.sh
+n8n OK                   -> Slack: 🟢 RECOVERED — n8n is back up (2026-10-18T17:46:05Z)
+[root@wazuh-server ~]# systemctl list-timers n8n-watchdog.timer --no-pager
+NEXT                         LEFT          LAST                         PASSED  UNIT               ACTIVATES
+Sun 2026-10-18 17:50:07 UTC  4min 1s left  Sun 2026-10-18 17:45:07 UTC  58s ago n8n-watchdog.timer n8n-watchdog.service

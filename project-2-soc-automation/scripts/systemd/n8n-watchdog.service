@@ -1,0 +1,5 @@
+[Unit]
+Description=n8n health watchdog
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/n8n-watchdog.sh

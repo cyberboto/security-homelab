@@ -1,0 +1,19 @@
+<!-- /var/ossec/etc/ossec.conf : automated containment for SSH brute force -->
+
+<!-- 1. Never block the analyst workstation (added inside the existing <global> block) -->
+<white_list>192.168.1.31</white_list>
+
+<!-- 2. Block the source IP for 180 s when an SSH brute-force rule fires.
+     5712 = brute force with a non-existent user, 5763 = brute force with a valid user.
+     Rule 2502 was removed: its alerts have no decoded srcip, so firewall-drop
+     logged "Cannot read 'srcip' from data" and blocked nothing. -->
+<ossec_config>
+  <active-response>
+    <command>firewall-drop</command>
+    <location>local</location>
+    <rules_id>5712,5763</rules_id>
+    <timeout>180</timeout>
+  </active-response>
+</ossec_config>
+
+<!-- Prerequisite on the Wazuh OVA (Amazon Linux 2023): dnf install -y iptables-nft -->

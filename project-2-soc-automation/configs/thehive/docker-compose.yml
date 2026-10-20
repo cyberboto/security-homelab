@@ -1,0 +1,50 @@
+# TheHive 5 + Cassandra + Elasticsearch on Ubuntu 26.04 (8 GB RAM, 4 vCPU, 40 GB disk)
+# Prereqs: Docker Engine + compose plugin; vm.max_map_count=262144 (/etc/sysctl.d/99-elasticsearch.conf)
+# Start:   docker compose up -d     UI: http://<vm-ip>:9000
+services:
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    restart: unless-stopped
+    environment:
+      - MAX_HEAP_SIZE=1G
+      - HEAP_NEWSIZE=256M
+      - CASSANDRA_CLUSTER_NAME=TheHive
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.24
+    container_name: elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  thehive:
+    image: strangebee/thehive:5.4
+    container_name: thehive
+    restart: unless-stopped
+    depends_on:
+      - cassandra
+      - elasticsearch
+    ports:
+      - "9000:9000"
+    environment:
+      - JVM_OPTS=-Xms1024M -Xmx1024M
+    command:
+      - --secret
+      - "${THEHIVE_SECRET}"
+      - --cql-hostnames
+      - cassandra
+      - --index-backend
+      - elasticsearch
+      - --es-hostnames
+      - elasticsearch
+
+volumes:
+  cassandra_data:
+  es_data:

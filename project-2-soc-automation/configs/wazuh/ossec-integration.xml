@@ -1,0 +1,7 @@
+<!-- /var/ossec/etc/ossec.conf : forward alerts (level >= 3) to n8n as JSON -->
+<integration>
+  <name>custom-n8n</name>
+  <hook_url>http://192.168.1.31:5678/webhook/wazuh-alerts</hook_url>
+  <level>3</level>
+  <alert_format>json</alert_format>
+</integration>

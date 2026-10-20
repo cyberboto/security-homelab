@@ -1,0 +1,29 @@
+# Attack + verification from the TheHive VM (192.168.1.184) against Wazuh (192.168.1.211), Oct 18, 2026
+soc@thehive:~$ for i in $(seq 1 12); do ssh -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=no fakeuser@192.168.1.211; done; sleep 5; echo "=== TESTING IF BLOCKED ==="; ssh -o ConnectTimeout=5 fakeuser@192.168.1.211
+fakeuser@192.168.1.211: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).   # attempt 1
+fakeuser@192.168.1.211: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).   # 2
+fakeuser@192.168.1.211: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).   # 3
+fakeuser@192.168.1.211: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).   # 4
+fakeuser@192.168.1.211: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).   # 5
+fakeuser@192.168.1.211: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).   # 6
+fakeuser@192.168.1.211: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).   # 7
+fakeuser@192.168.1.211: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).   # 8  <- rule 5712 threshold
+Connection closed by 192.168.1.211 port 22                                                      # 9  <- DROP rule lands
+ssh: connect to host 192.168.1.211 port 22: Connection timed out                                # 10
+ssh: connect to host 192.168.1.211 port 22: Connection timed out                                # 11
+ssh: connect to host 192.168.1.211 port 22: Connection timed out                                # 12
+=== TESTING IF BLOCKED ===
+ssh: connect to host 192.168.1.211 port 22: Connection timed out
+# (OpenSSH "post-quantum key exchange" notices removed for readability)
+
+# On the Wazuh server, during the block:
+[root@wazuh-server ~]# iptables -L INPUT -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+DROP       all  --  192.168.1.184        0.0.0.0/0
+
+# About 3 minutes later (timeout 180 s):
+[root@wazuh-server ~]# iptables -L INPUT -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+(empty: auto-unblocked)

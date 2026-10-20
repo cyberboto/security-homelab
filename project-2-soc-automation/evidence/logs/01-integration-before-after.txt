@@ -1,0 +1,21 @@
+# Wazuh integration log: /var/ossec/logs/integrations.log   (Oct 11, 2026)
+# Transcribed from evidence/screenshots/01 and 02.
+
+## BEFORE: two duplicate <integration> blocks, neither with a <hook_url>, so alerts went to a ghost IP
+[custom-n8n] ERROR: HTTPConnectionPool(host='192.168.1.100', port=5678): Max retries exceeded with url: /webhook/wazuh-alerts
+ (Caused by NewConnectionError("HTTPConnection(host='192.168.1.100', port=5678): Failed to establish a new connection: [Errno 113] No route to host"))
+
+## AFTER: removed the duplicate block, added hook_url, rebuilt the wrapper (it had been corrupted, "unexpected EOF")
+2026-10-11 17:52:48.415871 custom-n8n: sent rule 5503 to http://192.168.1.33:5678/webhook/wazuh-alerts -> HTTP 200
+2026-10-11 17:52:52.644495 custom-n8n: sent rule 5710 to http://192.168.1.33:5678/webhook/wazuh-alerts -> HTTP 200
+2026-10-11 17:52:54.883490 custom-n8n: sent rule 5710 to http://192.168.1.33:5678/webhook/wazuh-alerts -> HTTP 200
+2026-10-11 17:53:01.129055 custom-n8n: sent rule 5710 to http://192.168.1.33:5678/webhook/wazuh-alerts -> HTTP 200
+2026-10-11 17:53:02.360000 custom-n8n: sent rule 5710 to http://192.168.1.33:5678/webhook/wazuh-alerts -> HTTP 200
+2026-10-11 17:53:02.594752 custom-n8n: sent rule 2502 to http://192.168.1.33:5678/webhook/wazuh-alerts -> HTTP 200
+2026-10-11 18:13:15.185624 custom-n8n: ERROR: <urlopen error timed out>      <- n8n stopped (no retry: these alerts were lost)
+2026-10-11 18:13:25.437596 custom-n8n: ERROR: <urlopen error timed out>
+2026-10-11 18:44:15.202220 custom-n8n: sent rule 5710 to http://192.168.1.33:5678/webhook/wazuh-alerts -> HTTP 200
+2026-10-11 18:44:29.576165 custom-n8n: sent rule 2502 to http://192.168.1.33:5678/webhook/wazuh-alerts -> HTTP 200
+
+## Oct 17: the host PC's DHCP lease changed 192.168.1.33 -> 192.168.1.31, so delivery failed again (Errno 113).
+## Fix: sed -i 's#http://192.168.1.33:5678#http://192.168.1.31:5678#' /var/ossec/etc/ossec.conf && systemctl restart wazuh-manager
