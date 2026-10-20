@@ -15,7 +15,7 @@ Problem: A SOC that can only detect attacks without responding automatically is 
 
 As a result, I created a pipeline that works automatically. I tested an SSH brute-force attack, which was detected, blocked, enriched, reported and ticketed within a second without any human involvement.
 
-![Architecture](docs/architecture.png)
+![Network topology](docs/topology.png)
 
 ![SOC Pipeline workflow in n8n](evidence/screenshots/00-soc-pipeline-workflow.png)
 
@@ -45,8 +45,6 @@ As a result, I created a pipeline that works automatically. I tested an SSH brut
 - VM 2: Wazuh server (192.168.1.211), the central security server that runs the Wazuh engine, database and dashboard
 - VM 3: TheHive server on Ubuntu (192.168.1.184), where incidents turn into tickets
 - n8n on my host PC (192.168.1.31), plus Slack and AbuseIPDB in the cloud
-
-![Network topology](docs/topology.png)
 
 Permission: I own every system, and all attacks were run by me against my own virtual machines.
 
