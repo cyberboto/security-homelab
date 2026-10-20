@@ -1,6 +1,6 @@
 # Security Homelab: Dylan Durandis
 
-Cybersecurity student at the University at Albany (SUNY). Hands-on security engineering project built and tested in my own lab.
+Security engineering project built and tested in my own lab.
 
 ## [SOC Automation Lab: Detection, Response and Case Management](project-2-soc-automation/)
 
